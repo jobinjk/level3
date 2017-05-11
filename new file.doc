@@ -1,0 +1,104 @@
+﻿Task :
+
+Extract product data like images, description, price etc from “http://www.myntra.com/” in CSV format.
+
+
+Softwares used:
+
+Python: version 2.7.12
+scrapy: version 1.3.3
+ubuntu: elementary os
+
+
+Method
+
+1. create a virtual environment using code:- 
+	virtualenv (project name)
+
+2. It is recommended to install scrapy inside a virtual environment
+
+3. enter inside the virtual environment using cd (virtual environment name) and then install scrapy inside the virual environment using pip
+	pip install scrapy
+
+4. create a new project for scrapy
+	scrapy startproject (project name)
+
+5. enter inside the project using cd (project name)
+
+6. open items.py and enter the product name details and other required field inside the class here is the eg: 
+
+
+
+class MyntraItem(scrapy.Item):
+	product_name = scrapy.Field()
+	product_price = scrapy.Field()
+	product_details = scrapy.Field()
+	product_image_location = scrapy.Field()
+
+
+
+7. now check pipelines.py there wont be any change in that it would come when you create the scrapy project itself so dont worry about that
+
+
+8. now open the settings.py uncomment this line ITEM_PIPELINES = {
+'myntra.pipelines.MyntraPipeline': 300,
+}
+
+
+9. after completing all these we can start writing the real code which scrapes the data. Inside the folder spider create a new python file named new.py(you can use any name for the file)
+
+
+
+
+
+
+10. start writing the code from importing scrapy and items then create a class (spider subclass) and def parse() which helps in scraping web
+ here is the code below
+
+
+import scrapy
+from myntra.items import MyntraItem
+
+# create a class to run the spider
+class MyntraProductSpider(scrapy.Spider):
+name = "MyntraDeals" # name of the crawl eg: scrapy crawl ('name')
+allowed_domains = ["myntra.com"] # select the domain to be crawled
+#Use working product URL below
+start_urls = [
+	"https://www.myntra.com/tshirts/ether/ether-navy--white-striped-polo-t-shirt/1377369/buy",
+"https://www.myntra.com/helmets/ls2/ls2-men-black-printed-full-face-helmet-ff-352/1764707/buy",
+"https://www.myntra.com/helmets/ls2/ls2-men-black--red-full-face-helmet-ff-320/1764738/buy",
+"https://www.myntra.com/helmets/ls2/ls2-men-black-printed-full-face-helmet-ff-386/1792311/buy",
+"https://www.myntra.com/helmets/ls2/ls2-men-grey-melange-printed-full-face-helmet-ff-352/1764712/buy",
+]
+def parse(self, response):# create a parse function which scraps and requests url etc etc
+items = MyntraItem()
+title = response.xpath('//meta[@itemprop="name"]/@content').extract() # to get the xpath of title
+product_details = response.xpath('//meta[@itemprop="description"]/@content').extract() #to get the xpath of product details
+sale_price = response.xpath('//meta[@itemprop="description"]/@content').extract() #to get the xpath of price
+product_image_location = response.xpath('//meta[@itemprop="image"]/@content').extract() #to get the xpath of image location
+items['product_image_location'] = ''.join(product_image_location).strip()
+items['product_details'] = ''.join(product_details).strip("Buy")# joined the details in list items and striped off the word buy
+items['product_price'] = ''.join(sale_price).split('at ')[1].strip()# joined the price in list items and splited off the text till at
+items['product_name'] = ''.join(title[0].split("|")[0]).strip("Buy")
+return items
+
+
+
+Note:- Try finding the xpath by inspecting the webpages you will require some time understanding the path this is the major challenge in scraping once you find the xpath then its a piece of cake scraping the data.
+
+XPath is a major element in the XSLT standard. XPath can be used to navigate through elements and attributes in an XML document. XPath is a syntax for defining parts of an XML document
+
+If you cant find the correct xpath by inspecting then find another way by viewing source code of webpage and tracking the xpath 
+
+some sites like myntra have xpath starting with //meta this can only be viewed by viewing source code of the page
+
+Meta tags are snippets of text that describe a page's content; the meta tags don't appear on the page itself, but only in the page's code. 
+
+11. now your final code is ready you can run the code by using the command
+	scrapy crawl MyntraDeals -o somename.csv
+
+crawl command can only be used inside a scrapy project
+MyntraDeals is the name given inside the new.py 
+
+<somename>.csv used to create a csv file and <somename>.json for creating a json file
